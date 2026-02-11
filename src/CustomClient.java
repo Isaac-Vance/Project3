@@ -3,6 +3,7 @@ import java.net.*;
 import java.util.Scanner;
 public class CustomClient {
     public static Scanner scan = new Scanner(System.in);
+
     public static void main(String[] args) throws IOException {
         String host = args[0];
         int port = 3000;
@@ -15,7 +16,7 @@ public class CustomClient {
         String testMessage = "test";
         byte[] testMessageData = testMessage.getBytes();
         InetAddress serverAddress = InetAddress.getByName(host);
-        DatagramPacket testPacket = new DatagramPacket(testMessageData,testMessageData.length, serverAddress, port);
+        DatagramPacket testPacket = new DatagramPacket(testMessageData, testMessageData.length, serverAddress, port);
         socket.send(testPacket);
 
         byte[] testBuffer = new byte[1024];
@@ -24,10 +25,10 @@ public class CustomClient {
         String testResponse = new String(testResponsePacket.getData(), 0, testResponsePacket.getLength());
         System.out.println("Server replied: " + testResponse);
 
-//        Main UI loop
-        while(!quit) {
+//      Main UI loop
+        while (!quit) {
             String message = choiceConvert(menu());
-            if(message.equals("E")) quit = true;
+            if (message.equals("E")) quit = true;
             byte[] messageData = message.getBytes();
             DatagramPacket packet = new DatagramPacket(messageData, messageData.length, serverAddress, port);
             socket.send(packet);
@@ -41,7 +42,7 @@ public class CustomClient {
         socket.close();
     }
 
-    public static int menu(){
+    public static int menu() {
         System.out.println("Welcome to Isaac's file service! Please choose what you would like to do.\n1. List all files.\n2. Delete a file from the server\n3. Rename an existing file on the server.\n4. Download a file from the server\n5. Upload your file to the server.\n6. Exit.\nEnter choice here. (1, 2, etc.): ");
         return scan.nextInt();
     }
@@ -56,20 +57,5 @@ public class CustomClient {
             case 6 -> "E";
             default -> "";
         };
-    }
-    public static void listFiles(){
-
-    }
-    public static void deleteFile(){
-
-    }
-    public static void uploadFile(){
-
-    }
-    public static void renameFile(){
-
-    }
-    public static void downloadFile(){
-
     }
 }
