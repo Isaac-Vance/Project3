@@ -12,7 +12,7 @@ public class EchoServer {
 
         try(ServerSocket mySocket = new ServerSocket(3000)){
             while(true) {
-                System.out.println("Server is waiting on port" + port);
+                System.out.println("Server is waiting on port " + port);
                 //establish the connection first
                 Socket clientSocket = mySocket.accept();
                 System.out.println("Client connected: "
