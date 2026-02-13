@@ -1,30 +1,87 @@
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+
 public class CustomClient {
     static Scanner scan = new Scanner(System.in);
     public static void main(String[] args) throws Exception {
-        String host = args[0];
-        int port = 3000;
-        DatagramSocket socket = new DatagramSocket();
-        InetAddress serverAddress = InetAddress.getByName(host);
+        Socket socket = new Socket(args[0], 3000);
+        DataInputStream dis = new DataInputStream(socket.getInputStream());
+        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
         while (true) {
             int choice = menu();
-            String message = buildCommand(choice);
-            byte[] data = message.getBytes();
-            DatagramPacket packet =
-                    new DatagramPacket(data, data.length, serverAddress, port);
-            socket.send(packet);
-            if (choice == 6) break;
-            byte[] buffer = new byte[4096];
-            DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-            socket.receive(responsePacket);
-            String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
-            System.out.println("Server says:\n" + response);
-        }
-        socket.close();
-    }
+            switch (choice) {
+                case 1: // List
+                    dos.writeUTF("L");
+                    System.out.println(dis.readUTF());
+                    break;
+                case 2: // Delete
+                    dos.writeUTF("D");
+                    System.out.print("Filename: ");
+                    dos.writeUTF(scan.next());
+                    System.out.println(dis.readUTF());
+                    break;
+                case 3: // Rename
+                    dos.writeUTF("R");
+                    System.out.print("Old name: ");
+                    dos.writeUTF(scan.next());
+                    System.out.print("New name: ");
+                    dos.writeUTF(scan.next());
+                    System.out.println(dis.readUTF());
+                    break;
+                case 4: // Download
+                    dos.writeUTF("DOWNLOAD");
+                    System.out.print("Filename: ");
+                    String downloadName = scan.next();
+                    dos.writeUTF(downloadName);
+                    String status = dis.readUTF();
+                    if (status.equals("NOT_FOUND")) {
+                        System.out.println("File not found.");
+                    } else {
+                        long size = dis.readLong();
+                        try (FileOutputStream fos =
+                                     new FileOutputStream(downloadName)) {
+                            byte[] buffer = new byte[4096];
+                            long remaining = size;
 
+                            while (remaining > 0) {
+                                int read = dis.read(buffer, 0,
+                                        (int)Math.min(buffer.length, remaining));
+                                fos.write(buffer, 0, read);
+                                remaining -= read;
+                            }
+                        }
+                        System.out.println("Download complete.");
+                    }
+                    break;
+                case 5: // Upload
+                    dos.writeUTF("UPLOAD");
+                    System.out.print("Filename: ");
+                    String uploadName = scan.next();
+                    File file = new File(uploadName);
+                    if (!file.exists()) {
+                        System.out.println("File does not exist.");
+                        break;
+                    }
+                    dos.writeUTF(uploadName);
+                    dos.writeLong(file.length());
+                    try (FileInputStream fis = new FileInputStream(file)) {
+                        byte[] buffer = new byte[4096];
+                        int read;
+                        while ((read = fis.read(buffer)) != -1) {
+                            dos.write(buffer, 0, read);
+                        }
+                    }
+                    System.out.println(dis.readUTF());
+                    break;
+                case 6:
+                    dos.writeUTF("E");
+                    socket.close();
+                    return;
+            }
+            dos.flush();
+        }
+    }
     public static int menu() {
         System.out.println("""
                 1. List files
@@ -35,34 +92,5 @@ public class CustomClient {
                 6. Exit
                 """);
         return scan.nextInt();
-    }
-    public static String buildCommand(int choice) throws IOException {
-        switch (choice) {
-            case 1:
-                return "L";
-            case 2:
-                System.out.print("Enter filename: ");
-                return "D " + scan.next();
-            case 3:
-                System.out.print("Old name: ");
-                String oldName = scan.next();
-                System.out.print("New name: ");
-                String newName = scan.next();
-                return "R " + oldName + " " + newName;
-            case 4:
-                System.out.print("Filename to download: ");
-                return "O " + scan.next();
-            case 5:
-                System.out.print("Filename to upload: ");
-                String fileName = scan.next();
-                System.out.print("Enter text content: ");
-                scan.nextLine(); // clear buffer
-                String content = scan.nextLine();
-                return "U " + fileName + " " + content;
-            case 6:
-                return "E";
-            default:
-                return "";
-        }
     }
 }
