@@ -1,29 +1,21 @@
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
-
 public class CustomServer {
-
     static File serverFolder = new File("serverFolder");
-
     public static void main(String[] args) throws IOException {
-
         if (!serverFolder.exists()) {
             serverFolder.mkdir();
         }
-
         try (DatagramSocket socket = new DatagramSocket(3000)) {
             System.out.println("Server running on port 3000...");
-
             while (true) {
-
                 byte[] buffer = new byte[2048];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
 
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Received: " + message);
-
                 String response = handleCommand(message, socket, packet);
 
                 if (response != null) {
@@ -38,22 +30,16 @@ public class CustomServer {
     }
 
     private static String handleCommand(String message, DatagramSocket socket, DatagramPacket packet) throws IOException {
-
         String[] parts = message.split(" ");
-
         switch (parts[0]) {
-
             case "L":
                 return listFiles();
-
             case "D":
                 if (parts.length < 2) return "Error: Missing filename.";
                 return deleteFile(parts[1]);
-
             case "R":
                 if (parts.length < 3) return "Error: Missing filenames.";
                 return renameFile(parts[1], parts[2]);
-
             case "O":  // Download
                 if (parts.length < 2) return "Error: Missing filename.";
                 byte[] fileData = downloadFile(parts[1]);
@@ -69,17 +55,13 @@ public class CustomServer {
 
             case "U":  // Upload
                 if (parts.length < 3) return "Error: Missing data.";
-
                 String fileName = parts[1];
                 byte[] fileBytes = message.substring(
                         parts[0].length() + parts[1].length() + 2
                 ).getBytes();
-
                 return uploadFile(fileName, fileBytes);
-
             case "E":
                 return "Goodbye.";
-
             default:
                 return "Unknown command.";
         }
