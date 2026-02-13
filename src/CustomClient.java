@@ -1,61 +1,68 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 public class CustomClient {
-    public static Scanner scan = new Scanner(System.in);
-
-    public static void main(String[] args) throws IOException {
+    static Scanner scan = new Scanner(System.in);
+    public static void main(String[] args) throws Exception {
         String host = args[0];
         int port = 3000;
-        boolean quit = false;
-
-//      Send test packet and set up address
-        System.out.println("Testing Connection...");
         DatagramSocket socket = new DatagramSocket();
-        socket.setSoTimeout(2000);
-        String testMessage = "test";
-        byte[] testMessageData = testMessage.getBytes();
         InetAddress serverAddress = InetAddress.getByName(host);
-        DatagramPacket testPacket = new DatagramPacket(testMessageData, testMessageData.length, serverAddress, port);
-        socket.send(testPacket);
-
-        byte[] testBuffer = new byte[1024];
-        DatagramPacket testResponsePacket = new DatagramPacket(testBuffer, testBuffer.length);
-        socket.receive(testResponsePacket);
-        String testResponse = new String(testResponsePacket.getData(), 0, testResponsePacket.getLength());
-        System.out.println("Server replied: " + testResponse);
-
-//      Main UI loop
-        while (!quit) {
-            String message = choiceConvert(menu());
-            if (message.equals("E")) quit = true;
-            byte[] messageData = message.getBytes();
-            DatagramPacket packet = new DatagramPacket(messageData, messageData.length, serverAddress, port);
+        while (true) {
+            int choice = menu();
+            String message = buildCommand(choice);
+            byte[] data = message.getBytes();
+            DatagramPacket packet =
+                    new DatagramPacket(data, data.length, serverAddress, port);
             socket.send(packet);
-
-            byte[] buffer = new byte[1024];
+            if (choice == 6) break;
+            byte[] buffer = new byte[4096];
             DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
             socket.receive(responsePacket);
             String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
-            System.out.println("Server replied: " + response);
+            System.out.println("Server says:\n" + response);
         }
         socket.close();
     }
 
     public static int menu() {
-        System.out.println("Welcome to Isaac's file service! Please choose what you would like to do.\n1. List all files.\n2. Delete a file from the server\n3. Rename an existing file on the server.\n4. Download a file from the server\n5. Upload your file to the server.\n6. Exit.\nEnter choice here. (1, 2, etc.): ");
+        System.out.println("""
+                1. List files
+                2. Delete file
+                3. Rename file
+                4. Download file
+                5. Upload file
+                6. Exit
+                """);
         return scan.nextInt();
     }
-
-    public static String choiceConvert(int choice) {
-        return switch (choice) {
-            case 1 -> "L";
-            case 2 -> "D";
-            case 3 -> "R";
-            case 4 -> "O";
-            case 5 -> "U";
-            case 6 -> "E";
-            default -> "";
-        };
+    public static String buildCommand(int choice) throws IOException {
+        switch (choice) {
+            case 1:
+                return "L";
+            case 2:
+                System.out.print("Enter filename: ");
+                return "D " + scan.next();
+            case 3:
+                System.out.print("Old name: ");
+                String oldName = scan.next();
+                System.out.print("New name: ");
+                String newName = scan.next();
+                return "R " + oldName + " " + newName;
+            case 4:
+                System.out.print("Filename to download: ");
+                return "O " + scan.next();
+            case 5:
+                System.out.print("Filename to upload: ");
+                String fileName = scan.next();
+                System.out.print("Enter text content: ");
+                scan.nextLine(); // clear buffer
+                String content = scan.nextLine();
+                return "U " + fileName + " " + content;
+            case 6:
+                return "E";
+            default:
+                return "";
+        }
     }
 }
