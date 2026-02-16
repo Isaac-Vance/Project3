@@ -39,8 +39,8 @@ public class CustomClient {
                         System.out.println("File not found.");
                     } else {
                         long size = dis.readLong();
-                        try (FileOutputStream fos =
-                                     new FileOutputStream(downloadName)) {
+                        File outfile = new File("ClientFiles", downloadName);
+                        try (FileOutputStream fos = new FileOutputStream(outfile)) {
                             byte[] buffer = new byte[4096];
                             long remaining = size;
 
@@ -58,7 +58,7 @@ public class CustomClient {
                     dos.writeUTF("UPLOAD");
                     System.out.print("Filename: ");
                     String uploadName = scan.next();
-                    File file = new File(uploadName);
+                    File file = new File("ClientFiles", uploadName);
                     if (!file.exists()) {
                         System.out.println("File does not exist.");
                         break;
@@ -89,8 +89,8 @@ public class CustomClient {
                 3. Rename file
                 4. Download file
                 5. Upload file
-                6. Exit
-                """);
+                6. Exit\n
+                Enter your choice: """);
         return scan.nextInt();
     }
 }
